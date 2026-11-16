@@ -2,6 +2,10 @@
 
 GitLab builds the service and publishes an image by digest. A deployment commit selects that digest. Argo CD reconciles the commit into Kubernetes, and Prometheus reports whether it can still scrape the service. The demo follows those identifiers across the tools so a viewer can check what actually reached the cluster.
 
+[Watch the narrated metrics-port repair](media/devsecops/devsecops-metrics-fix.mp4) · [English captions](media/devsecops/devsecops-metrics-fix.en.vtt)
+
+The video opens on the patch from `$prepare-gitops-correction`. It changes `metricsPort` from `9091` to `9090` in `values/component.yaml`. Helm rendered six resources before and after the patch. All six passed Kubeconform on both sides, and only the metrics NetworkPolicy’s ingress port changed.
+
 | Handoff | What to look for |
 | --- | --- |
 | Source → GitLab CI | Open the pipeline at the source commit. Follow the build, SBOM and vulnerability scan, then the registry publication job. Read the scan decision alongside the finding count. |
@@ -19,4 +23,6 @@ The pipeline publishes an immutable image. The fault and correction change polic
 
 ## Recorded milestones
 
-A private Azure run completed the GitLab build, scan and publish jobs, deployed the selected revision with Argo CD, and produced fresh Prometheus samples. The scan retained 28 High findings under a time-limited lab exception. The resource group was deleted after the run. The fault, Codex-authored correction and recovery chapters are pending.
+The GitLab pipeline and initial Argo CD deployment were recorded in a private Azure lab. The pipeline built, scanned and published the image. The scan retained 28 High findings under a time-limited lab exception. Azure confirmed deletion of the resource group after the run.
+
+The repair was recorded in a separate local k3s cluster running the mission-status application. Argo CD synced deployment commit `97ed569` with the wrong port, then commit `09eeec8` with the corrected policy. Prometheus recorded four failed scrapes followed by four successful scrapes. The event counter rose from 429 to 435 over the four successful samples. The same pod answered its health check with HTTP 200 throughout, and the unauthorized probe remained blocked.
