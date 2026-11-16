@@ -1,5 +1,11 @@
 # BoundaryXP plugin checks
 
+The November 16 Linux/Glama documentation update does not change this wrapper's
+runtime, platform guard, manifest, lockfile or test contract. The separately
+published Linux MCP passed its own build/startup/introspection and full-case
+acceptance, linked from the plugin READMEs. Those results are not counted as
+Linux support or new integration passes for this Windows-only plugin.
+
 Run `npm run test:boundaryxp` from the repository root. The single master command
 covers unit/package checks, safe failures/isolation and the Windows native
 integration. It needs Node >=22.19; the native integration also requires Windows

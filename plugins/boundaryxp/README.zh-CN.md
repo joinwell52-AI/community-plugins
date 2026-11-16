@@ -11,6 +11,21 @@ LLM 判断、计算回执、原文证据和未知项；计算通过不自动证�
 
 ## 安装与首次使用
 
+### Linux MCP 与 Glama 验证
+
+独立 MCP 已发布 Linux x64 编译版 `0.4.0-rc.9-linux.1`，需要 Node >=22.18、
+glibc >=2.36，提供 21 个工具和 17 项资源。[Glama](https://glama.ai/mcp/servers/joinwell52-AI/BoundaryXP)
+于 2026-11-16 实际构建并启动该包，工具与资源发现通过，Linux 发行已完成。
+[发行与摘要](https://github.com/joinwell52-AI/BoundaryXP/releases/tag/mcp-v0.4.0-rc.9-linux.1)、
+[验收范围](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/linux/RELEASE.md)均公开可查，原始 Core 源码仍私有。
+
+**本插件封装仍仅支持 Windows x64，锁定 rc.9。** 平台检查、依赖锁和 Windows 验收范围
+保持不变。Linux 用户可按[独立 stdio 接入指南](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/linux/INSTALL.zh-CN.md)
+安装 MCP，不应在 Linux 上安装这个 Windows 插件封装。Glama 启动与发现通过不等于
+本插件已完成 Linux/macOS 验收，也不代表语义正确性认证。
+
+### 安装 Windows 插件
+
 当前是社区插件市场的申请版本，**不代表已获官方公共目录批准**。在 Codex「添加插件
 市场」输入包含本插件的 Git 仓库及分支；上游合并前使用已审阅的贡献分支，而非上游
 main。保留完整仓库，或稀疏路径填写 `.agents/plugins` 和 `plugins`。随后安装

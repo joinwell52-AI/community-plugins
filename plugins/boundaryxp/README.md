@@ -22,6 +22,24 @@ Grafana test results are separate from this plugin's native MCP acceptance.
 
 ## Installation and first safe prompt
 
+### Linux MCP and Glama verification
+
+The standalone MCP now also has a compiled **Linux x64** release,
+`0.4.0-rc.9-linux.1` (Node >=22.18, glibc >=2.36), with 21 tools and 17 resources.
+[Glama](https://glama.ai/mcp/servers/joinwell52-AI/BoundaryXP) successfully built
+and started that package, discovered its tools/resources and published the Linux
+release on November 16, 2026. [Release and checksums](https://github.com/joinwell52-AI/BoundaryXP/releases/tag/mcp-v0.4.0-rc.9-linux.1)
+and [validation scope](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/linux/RELEASE.md)
+are public. Original Core source remains private.
+
+**This plugin wrapper still targets Windows x64 and locks rc.9.** Its platform
+guard, lockfile and Windows acceptance are unchanged. Linux users can configure
+the standalone stdio MCP using the [Linux setup guide](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/linux/INSTALL.en.md);
+do not install this Windows-only wrapper on Linux. Glama startup/introspection
+does not qualify this plugin on Linux/macOS or certify semantic accuracy.
+
+### Install the Windows plugin
+
 This is a **community-marketplace submission**, not an approved public-directory
 listing. Add the Git repository/ref containing this plugin with Codex's **Add
 plugin marketplace**. Use the complete repository, or sparse paths
