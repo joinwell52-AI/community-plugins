@@ -25,4 +25,18 @@ source/rebuild reproducibility is outside this compiled-dependency submission.
 Repository-wide `npm run validate:marketplace`, `npm run test:marketplace` and
 `npm run validate` remain separate checks. Any unrelated dependency/platform
 failures must be reported rather than counted as a plugin pass. All acceptance
-for this change is local; no new hosted CI workflow is included.
+for this change is local. The optional manual-only `boundaryxp.yml` workflow
+defines one master job, runs Node 22.19 and 24.19 sequentially, then audits the
+lock and checks unchanged tracked files. It does not run on push/PR and was not
+dispatched. It is not used as evidence of hosted qualification or a required gate.
+
+See [the Windows baseline comparison](GRAFANA-WINDOWS-BASELINE.md) for the
+unmodified upstream Grafana failures, exact comparison and reproducible commands.
+
+Local acceptance on 2026-11-16 ran the unchanged master sequentially on Windows
+x64 with Node 22.19.0 and 24.19.0: **7/7 passed on each, zero skips**. The Node
+22.19 distribution was downloaded from nodejs.org and checked against its
+published SHA-256 before execution. Both runs performed a fresh locked npm
+installation and real native MCP operations. The locked production audit
+reported zero vulnerabilities. Full static validation passed; full-marketplace
+Windows success and hosted-workflow execution are not claimed.

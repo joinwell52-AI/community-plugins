@@ -16,6 +16,10 @@ No model API key, executable installer or separately installed BoundaryXP
 application is required for this host-mode plugin. Core implementation source
 is private and is not included in this PR/plugin.
 
+Grafana is a separate plugin in this community repository. BoundaryXP does not
+depend on it, and users do not need to install or configure Grafana. Repository-wide
+Grafana test results are separate from this plugin's native MCP acceptance.
+
 ## Installation and first safe prompt
 
 This is a **community-marketplace submission**, not an approved public-directory

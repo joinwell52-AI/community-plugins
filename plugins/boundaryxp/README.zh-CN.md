@@ -68,5 +68,8 @@ main。保留完整仓库，或稀疏路径填写 `.agents/plugins` 和 `plugins
 MCP 测试，验证多 DEV 保存、字典导入和重连持久化。不伪造模型响应，不把封装测试称为
 语义准确率验收。非 Windows 的原生集成测试明确跳过。
 
+Grafana 是社区仓库中的另一个插件，BXP 不依赖它，客户不需要安装或配置 Grafana。
+仓库总测试中的 Grafana 检查与 BXP 自身的原生 MCP 验收分开记录。
+
 [npm 中英安装与升级](https://www.npmjs.com/package/boundaryxp-mcp) · [MIT](LICENSE) ·
 [第三方分发说明](THIRD-PARTY-NOTICES.md)
