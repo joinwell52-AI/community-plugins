@@ -6,8 +6,9 @@ import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { McpClient } from '../support/client.mjs';
+import { runtimeSpec } from '../../../plugins/boundaryxp/scripts/launch.mjs';
 
-test('cold packaged install, actual native tools, multiple DEV tasks and persistent dictionaries', { timeout: 360_000, skip: process.platform !== 'win32' || process.arch !== 'x64' ? 'Published rc.9 native runtime requires Windows x64; not qualified on this host.' : false }, async t => {
+test('cold packaged install, actual native tools, multiple DEV tasks and persistent dictionaries', { timeout: 360_000, skip: !['win32','linux'].includes(process.platform) || process.arch !== 'x64' ? 'Native runtime requires Windows x64 or Linux x64/glibc >=2.36; not qualified on this host.' : false }, async t => {
   const work = await fs.mkdtemp(path.join(os.tmpdir(), 'bxp-plugin-e2e-'));
   const plugin = path.join(work, 'copied plugin');
   await fs.cp(fileURLToPath(new URL('../../../plugins/boundaryxp/', import.meta.url)), plugin, { recursive:true });
@@ -15,7 +16,7 @@ test('cold packaged install, actual native tools, multiple DEV tasks and persist
   const config = JSON.parse(await fs.readFile(path.join(plugin,'.mcp.json'),'utf8')).mcpServers.boundaryxp;
   const start = () => new McpClient(process.execPath,config.args,{cwd:path.resolve(plugin,config.cwd),env:{...process.env,BXP_PLUGIN_HOME:home}});
   let client = start(); let project; const dictionaryIds = [];
-  const receipt = {version:'0.4.0-rc.9',model_requests:0,original_core_source_in_plugin:false};
+  const receipt = {version:runtimeSpec().version,platform:process.platform,node:process.version,model_requests:0,original_core_source_in_plugin:false};
   try {
     await client.connect();
     const tools = (await client.request('tools/list')).tools;
@@ -24,7 +25,7 @@ test('cold packaged install, actual native tools, multiple DEV tasks and persist
     receipt.tools=tools.length; receipt.resources=resources.length;
     for (const language of ['en','zh-CN']) {
       const caps = await client.call('bx_capabilities',{language,help_topic:'tools'});
-      assert.equal(caps.product.adapter_version,'0.4.0-rc.9');
+      assert.equal(caps.product.adapter_version,runtimeSpec().version);
       assert.equal(caps.business_decision,null); assert.equal(caps.execution_authorization,null);
     }
     const profiles = (await client.call('bx_profiles_list')).data.profiles;
@@ -69,10 +70,15 @@ test('cold packaged install, actual native tools, multiple DEV tasks and persist
     receipt.workbench_http=200; receipt.nodes=3; receipt.format_examples=4;
     const dictionariesBefore = (await client.call('bx_dictionaries_list')).data.packs.filter(p => p.custom);
     assert.equal(dictionariesBefore.length,2);
+    const profileBytes = await fs.readFile(path.join(home,'host-profiles.json'));
+    const runtimePath = path.join(home,`runtime-${runtimeSpec().version}`,'plugin-runtime.json');
+    const runtimeStat = await fs.stat(runtimePath);
     await client.close(); client=start(); await client.connect();
     assert.equal((await client.call('bx_projects_list')).data.total,1);
     assert.equal((await client.call('bx_project_get',{project_id:project.project_id,revision:project.revision})).data.nodes.length,3);
     assert.deepEqual((await client.call('bx_dictionaries_list')).data.packs.filter(p=>p.custom),dictionariesBefore);
+    assert.deepEqual(await fs.readFile(path.join(home,'host-profiles.json')),profileBytes);
+    assert.equal((await fs.stat(runtimePath)).mtimeMs,runtimeStat.mtimeMs);
     receipt.reconnect_preserved=true; receipt.custom_dictionaries=2;
     await fs.writeFile(path.join(work,'receipt.json'),JSON.stringify(receipt,null,2));
     t.diagnostic('Real compiled-package receipt: '+JSON.stringify(receipt));

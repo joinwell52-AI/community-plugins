@@ -2,7 +2,14 @@
 
 # BoundaryXP · 7+1 task boundary verification
 
-**Plugin 0.1.0 · MCP 0.4.0-rc.9 · Windows x64 · Node.js >=22.19 with bundled npm**
+**Plugin 0.2.0 · Windows / Linux x64 · Node.js >=22.19 with npm**
+
+| Platform | Locked MCP package | Requirements |
+|---|---|---|
+| Windows x64 | `0.4.0-rc.9` | Existing runtime lock and data directory retained |
+| Linux x64 | `0.4.0-rc.9-linux.1` | glibc >=2.36 (e.g. Debian 12 / Ubuntu 24.04); no Alpine/musl or ARM64 |
+
+The launcher selects a separate, exact lockfile for each platform. No macOS support is claimed.
 
 This plugin connects the existing compiled BoundaryXP MCP to Codex. The current
 host LLM interprets the task; the native Core independently verifies submitted
@@ -32,13 +39,14 @@ release on November 16, 2026. [Release and checksums](https://github.com/joinwel
 and [validation scope](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/linux/RELEASE.md)
 are public. Original Core source remains private.
 
-**This plugin wrapper still targets Windows x64 and locks rc.9.** Its platform
-guard, lockfile and Windows acceptance are unchanged. Linux users can configure
-the standalone stdio MCP using the [Linux setup guide](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/linux/INSTALL.en.md);
-do not install this Windows-only wrapper on Linux. Glama startup/introspection
-does not qualify this plugin on Linux/macOS or certify semantic accuracy.
+**The plugin wrapper now supports both Windows and Linux x64.** It checks Node,
+CPU and Linux glibc before creating storage or installing anything. The Windows
+lockfile remains byte-identical; Linux uses `runtime/linux/package-lock.json`.
+Glama verification concerns the standalone package; this wrapper's separate
+installation and case evidence is documented in the [test guide](../../tests/boundaryxp/README.md).
+Neither verifies semantic accuracy for arbitrary inputs.
 
-### Install the Windows plugin
+### Install on Windows or Linux
 
 This is a **community-marketplace submission**, not an approved public-directory
 listing. Add the Git repository/ref containing this plugin with Codex's **Add
@@ -66,7 +74,7 @@ Ask:
 > bx_profiles_list and bx_workbench_open. Return the actual version and URL.
 > Do not submit analysis or change projects.
 
-Expect MCP rc.9, 21 tools and a localhost workbench URL. Open the returned URL;
+Expect the platform-specific MCP version above, 21 tools and a localhost workbench URL. Open the returned URL;
 `browser_opened:false` means opening the browser is a host/user action.
 The URL's random port is a workbench, not a remote MCP endpoint.
 
@@ -90,9 +98,20 @@ For custom dictionaries, call `bx_dictionary_format` for L2 or L3 in `en` or
 same document with its returned sha256 using `bx_dictionary_import`. Versions
 cannot be silently overwritten. Binding a dictionary grants no authority.
 
+For a calculation case, use [limits-and-budget.md](examples/limits-and-budget.md)
+with the English L2/L3 examples returned by `bx_dictionary_format`, validated,
+imported and explicitly bound. The L3 example defines “customer canary”; retain
+that dictionary evidence rather than inferring an environment from the name.
+Ask the host to judge each child and the combined budget, submit supported
+finite queries, read both reports and recheck the saved result. The task text is
+test data, not permission to build, deploy or execute anything.
+
 ## Files, permissions, network and authentication
 
-- Default home: `%LOCALAPPDATA%/BoundaryXP/CommunityPlugin`. It contains the npm
+- Default Windows home: `%LOCALAPPDATA%/BoundaryXP/CommunityPlugin` (unchanged).
+  Linux: `$XDG_DATA_HOME/BoundaryXP/CommunityPlugin`, or
+  `$HOME/.local/share/BoundaryXP/CommunityPlugin` when XDG_DATA_HOME is unset.
+  The selected home contains the npm
   cache, pinned runtime, empty host profiles and `data-rc9` task/dictionary store.
   This is separate from existing standalone installations. No existing tasks,
   dictionary directories, host settings or ports are discovered or changed.
@@ -102,7 +121,8 @@ cannot be silently overwritten. Binding a dictionary grants no authority.
   **Write**: plugin-owned installation, task revisions, dictionaries and reports.
   The launcher does not edit Codex settings or install a service/scheduled task.
 - npm downloads public packages from registry.npmjs.org. Package lifecycle
-  scripts are disabled and lockfile integrity is checked by npm. The native
+  scripts are disabled and lockfile integrity is checked by npm. Empty private
+  npm configuration files prevent inheriting user/global npm credentials or registries. The native
   binary is already included in the published package; no Core source build runs.
 - The local workbench binds loopback. Core does not call a model or access the
   network. This wrapper exposes host mode only and does not read `.env` or API
@@ -115,15 +135,17 @@ cannot be silently overwritten. Binding a dictionary grants no authority.
 
 ## Updates, removal and safe failures
 
-This plugin pins rc.9, not `latest`. It does not automatically upgrade the Core,
+This plugin pins Windows rc.9 and Linux rc.9-linux.1, not a moving npm tag. It does not automatically upgrade the Core,
 migrate existing data or restart other clients. Future runtime changes need an
 explicit migration plan preserving original records. Keep the plugin home when
 updating/removing the plugin; plugin cache deletion does not delete this home.
-Do not run duplicate connections against one task store.
+Do not run duplicate connections against one task store. Cross-OS copying of an
+existing store has not been qualified; use each platform's dedicated home.
 
 | Failure | Action |
 |---|---|
-| BXP_PLATFORM | Use Windows x64; macOS/Linux are not qualified for this native package. |
+| BXP_PLATFORM | Use Windows x64 or Linux x64. macOS and ARM64 are unsupported. |
+| BXP_LIBC | Use Linux with glibc >=2.36; Alpine/musl and older glibc are unsupported. |
 | BXP_NODE / BXP_NPM | Install supported Node with bundled npm and restart the host. |
 | BXP_HOME | Choose an empty dedicated directory; existing contents were preserved. |
 | BXP_BUSY | Wait for the other install and reconnect; inspect a stale install.lock only after confirming no installation is running. |
@@ -134,7 +156,7 @@ Do not run duplicate connections against one task store.
 ## Verification and distribution
 
 From the repository root run `npm run test:boundaryxp`. Portable tests cover
-package structure, version pinning, isolation and failure behavior. Windows
+package structure, platform-specific locks, isolation and failure behavior. Windows/Linux
 integration tests copy the plugin into a new directory, perform a real npm
 installation, exercise the native MCP tools, save a multi-DEV project, validate
 and import dictionaries, reconnect and verify persistence. They do not submit a

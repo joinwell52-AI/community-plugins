@@ -6,17 +6,32 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 export const VERSION = '0.4.0-rc.9';
+export const LINUX_VERSION = '0.4.0-rc.9-linux.1';
 const pluginRoot = fileURLToPath(new URL('../', import.meta.url));
 const owner = { kind: 'BOUNDARYXP_COMMUNITY_PLUGIN', schema: 1 };
 
-export function assertSupported(platform = process.platform, arch = process.arch, version = process.versions.node) {
-  if (platform !== 'win32' || arch !== 'x64') throw new Error('BXP_PLATFORM: this compiled release supports Windows x64 only. No installation was attempted.');
+export function assertSupported(platform = process.platform, arch = process.arch, version = process.versions.node,
+  glibc = platform === 'linux' ? process.report.getReport().header.glibcVersionRuntime : undefined) {
+  if (!['win32', 'linux'].includes(platform) || arch !== 'x64') throw new Error('BXP_PLATFORM: use Windows x64 or Linux x64 with glibc >=2.36. No installation was attempted.');
   const [major, minor] = version.split('.').map(Number);
   if (!(major > 22 || (major === 22 && minor >= 19))) throw new Error('BXP_NODE: use Node.js >=22.19 with its bundled npm.');
+  if (platform === 'linux') {
+    const [libMajor, libMinor] = String(glibc || '').split('.').map(Number);
+    if (!(libMajor > 2 || (libMajor === 2 && libMinor >= 36))) throw new Error('BXP_LIBC: Linux requires glibc >=2.36; musl/Alpine and older glibc are unsupported. No installation was attempted.');
+  }
 }
 
-export function resolveHome(env = process.env) {
-  const base = env.BXP_PLUGIN_HOME || path.join(env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'BoundaryXP', 'CommunityPlugin');
+export function runtimeSpec(platform = process.platform) {
+  if (platform === 'win32') return { version: VERSION, directory: 'runtime' };
+  if (platform === 'linux') return { version: LINUX_VERSION, directory: 'runtime/linux' };
+  throw new Error('BXP_PLATFORM: no compiled package for this platform.');
+}
+
+export function resolveHome(env = process.env, platform = process.platform) {
+  const defaultBase = platform === 'linux'
+    ? (env.XDG_DATA_HOME || path.join(env.HOME || os.homedir(), '.local', 'share'))
+    : (env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'));
+  const base = env.BXP_PLUGIN_HOME || path.join(defaultBase, 'BoundaryXP', 'CommunityPlugin');
   if (!path.isAbsolute(base) || base.includes('\0') || path.resolve(base) === path.parse(path.resolve(base)).root) {
     throw new Error('BXP_HOME: choose an absolute, non-root directory dedicated to this plugin.');
   }
@@ -41,7 +56,7 @@ export async function claimHome(home) {
 
 export function safeEnvironment(env = process.env) {
   // Forward OS facilities, not provider credentials, NODE_OPTIONS or proxy secrets.
-  const allowed = new Set(['path','systemroot','windir','comspec','pathext','temp','tmp','userprofile','localappdata','appdata','homedrive','homepath','systemdrive','programfiles','programfiles(x86)','programw6432']);
+  const allowed = new Set(['path','systemroot','windir','comspec','pathext','temp','tmp','userprofile','localappdata','appdata','homedrive','homepath','systemdrive','programfiles','programfiles(x86)','programw6432','home','tmpdir','lang','lc_all']);
   return Object.fromEntries(Object.entries(env).filter(([key]) => allowed.has(key.toLowerCase())));
 }
 
@@ -52,25 +67,36 @@ function waitForChild(child, label) {
   });
 }
 
+export async function findNpmCli(execPath = process.execPath) {
+  const bin = path.dirname(await fs.realpath(execPath));
+  const candidates = [path.join(bin, 'node_modules/npm/bin/npm-cli.js'),
+    path.resolve(bin, '../lib/node_modules/npm/bin/npm-cli.js'),
+    path.resolve(bin, '../share/nodejs/npm/bin/npm-cli.js')];
+  for (const candidate of candidates) {
+    try { if ((await fs.stat(candidate)).isFile()) return candidate; }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+  throw new Error('BXP_NPM: install supported Node with npm beside node or in its lib/node_modules directory.');
+}
+
 export async function ensureRuntime(home) {
-  const specDir = path.join(pluginRoot, 'runtime');
+  const { version, directory } = runtimeSpec();
+  const specDir = path.join(pluginRoot, directory);
   const lock = await fs.readFile(path.join(specDir, 'package-lock.json'));
   const lockSha256 = createHash('sha256').update(lock).digest('hex');
-  const runtime = path.join(home, `runtime-${VERSION}`);
+  const runtime = path.join(home, `runtime-${version}`);
   const receipt = path.join(runtime, 'plugin-runtime.json');
   try {
     const saved = JSON.parse(await fs.readFile(receipt, 'utf8'));
     const pkg = JSON.parse(await fs.readFile(path.join(runtime, 'node_modules/boundaryxp-mcp/package.json'), 'utf8'));
-    if (saved.version !== VERSION || saved.lock_sha256 !== lockSha256 || pkg.version !== VERSION) throw new Error('BXP_RUNTIME: installed runtime identity differs; retain data and review installation.');
+    if (saved.version !== version || saved.lock_sha256 !== lockSha256 || pkg.version !== version) throw new Error('BXP_RUNTIME: installed runtime identity differs; retain data and review installation.');
     return path.join(runtime, 'node_modules/boundaryxp-mcp/server.mjs');
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
     try { await fs.access(runtime); throw new Error('BXP_RUNTIME: incomplete runtime exists; it was retained for inspection.'); }
     catch (accessError) { if (accessError.code !== 'ENOENT') throw accessError; }
   }
-  const npmCli = path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
-  try { await fs.access(npmCli); }
-  catch { throw new Error('BXP_NPM: install Node with bundled npm; npm-cli.js was not found beside node.exe.'); }
+  const npmCli = await findNpmCli();
   const lockDir = path.join(home, 'install.lock');
   try { await fs.mkdir(lockDir); }
   catch (error) { if (error.code === 'EEXIST') throw new Error('BXP_BUSY: another installation may be running. Wait for it, then reconnect. Stale locks require manual inspection.'); throw error; }
@@ -78,16 +104,20 @@ export async function ensureRuntime(home) {
     const stage = await fs.mkdtemp(path.join(home, 'staging-'));
     await fs.copyFile(path.join(specDir, 'package.json'), path.join(stage, 'package.json'));
     await fs.writeFile(path.join(stage, 'package-lock.json'), lock);
-    console.error(`BoundaryXP: installing pinned ${VERSION} from registry.npmjs.org (no lifecycle scripts).`);
-    const child = spawn(process.execPath, [npmCli, 'ci', '--prefix', stage, '--ignore-scripts', '--no-audit', '--no-fund', '--registry=https://registry.npmjs.org', '--cache', path.join(home, 'npm-cache')], {
+    const userConfig = path.join(stage, 'empty-user.npmrc');
+    const globalConfig = path.join(stage, 'empty-global.npmrc');
+    await fs.writeFile(userConfig, '', { flag: 'wx' });
+    await fs.writeFile(globalConfig, '', { flag: 'wx' });
+    console.error(`BoundaryXP: installing pinned ${version} from registry.npmjs.org (no lifecycle scripts).`);
+    const child = spawn(process.execPath, [npmCli, 'ci', '--prefix', stage, '--ignore-scripts', '--no-audit', '--no-fund', '--registry=https://registry.npmjs.org', '--userconfig', userConfig, '--globalconfig', globalConfig, '--cache', path.join(home, 'npm-cache')], {
       cwd: stage, env: safeEnvironment(), windowsHide: true, shell: false, stdio: ['ignore', 'pipe', 'pipe']
     });
     child.stdout.pipe(process.stderr); child.stderr.pipe(process.stderr);
     const timer = setTimeout(() => child.kill(), 240_000);
     try { await waitForChild(child, 'BXP_INSTALL'); } finally { clearTimeout(timer); }
     const pkg = JSON.parse(await fs.readFile(path.join(stage, 'node_modules/boundaryxp-mcp/package.json'), 'utf8'));
-    if (pkg.version !== VERSION) throw new Error('BXP_RUNTIME: unexpected package version.');
-    await fs.writeFile(path.join(stage, 'plugin-runtime.json'), JSON.stringify({ version: VERSION, lock_sha256: lockSha256 }));
+    if (pkg.version !== version) throw new Error('BXP_RUNTIME: unexpected package version.');
+    await fs.writeFile(path.join(stage, 'plugin-runtime.json'), JSON.stringify({ version, lock_sha256: lockSha256 }));
     await fs.rename(stage, runtime);
     return path.join(runtime, 'node_modules/boundaryxp-mcp/server.mjs');
   } finally { await fs.rmdir(lockDir); }
@@ -106,7 +136,7 @@ export async function main(args = process.argv.slice(2)) {
   // documents optional provider profiles without silently inheriting API keys.
   const profileConfig = JSON.parse(await fs.readFile(profiles, 'utf8'));
   if (!Array.isArray(profileConfig.profiles) || profileConfig.profiles.length) throw new Error('BXP_PROFILE: plugin requires an empty profiles list for host mode. Existing file was retained.');
-  if (args.includes('--install-only')) { console.log(JSON.stringify({ version: VERSION, ready: true })); return; }
+  if (args.includes('--install-only')) { console.log(JSON.stringify({ version: runtimeSpec().version, ready: true })); return; }
   const child = spawn(process.execPath, [server, '--data-root', path.join(home, 'data-rc9'), '--profiles', profiles], {
     cwd: home, env: safeEnvironment(), windowsHide: true, shell: false, stdio: 'inherit'
   });

@@ -31,3 +31,12 @@ test('path and command arguments fail closed; secrets are not passed to children
   await assert.rejects(main(['--data-root','arbitrary']), /BXP_ARGS/);
   assert.deepEqual(safeEnvironment({ Path:'safe-path', SystemRoot:'os', OPENAI_API_KEY:'secret', CURSOR_API_KEY:'secret', BOUNDARYXP_API_KEY:'secret', NODE_OPTIONS:'--import=evil', npm_config_registry:'evil', BXP_PLUGIN_HOME:'private-home' }), { Path:'safe-path', SystemRoot:'os' });
 });
+
+test('Linux default home follows XDG and rejects relative storage', () => {
+  const base = path.resolve(os.tmpdir(),'bxp-home-layout');
+  assert.equal(resolveHome({XDG_DATA_HOME:base}, 'linux'), path.join(base,'BoundaryXP','CommunityPlugin'));
+  assert.equal(resolveHome({HOME:base}, 'linux'), path.join(base,'.local','share','BoundaryXP','CommunityPlugin'));
+  assert.throws(() => resolveHome({XDG_DATA_HOME:'relative'}, 'linux'), /BXP_HOME/);
+  assert.equal(resolveHome({LOCALAPPDATA:base}, 'win32'), path.join(base,'BoundaryXP','CommunityPlugin'));
+  assert.deepEqual(safeEnvironment({HOME:base,LANG:'C.UTF-8',HTTP_PROXY:'secret',NPM_TOKEN:'secret',LD_PRELOAD:'evil',NODE_PATH:'evil'}), {HOME:base,LANG:'C.UTF-8'});
+});
