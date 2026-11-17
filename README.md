@@ -108,8 +108,9 @@ are picked up.
 
 ## Available plugins
 
-BoundaryXP adds a Windows x64 local MCP using the pinned compiled npm rc.9
-package, with host LLM analysis, native verification and custom L2/L3 dictionaries.
+BoundaryXP adds a Windows/Linux x64 local MCP using pinned compiled npm
+rc.10 / rc.10-linux.1 packages (B345), with host LLM analysis, native verification
+and complete L2/L3 directory imports. Plugin 0.3.0 preserves old plugin data through copy migration.
 See its [English](plugins/boundaryxp/README.md) / [中文](plugins/boundaryxp/README.zh-CN.md)
 guides and [local test scope](tests/boundaryxp/README.md). Original Core source
 is not included; first use downloads the locked dependency into plugin-owned storage.

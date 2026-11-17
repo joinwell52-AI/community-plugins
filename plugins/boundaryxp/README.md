@@ -2,12 +2,12 @@
 
 # BoundaryXP · 7+1 task boundary verification
 
-**Plugin 0.2.0 · Windows / Linux x64 · Node.js >=22.19 with npm**
+**Plugin 0.3.0 · MCP rc.10 / B345 · Windows / Linux x64 · Node.js >=22.19 with npm**
 
 | Platform | Locked MCP package | Requirements |
 |---|---|---|
-| Windows x64 | `0.4.0-rc.9` | Existing runtime lock and data directory retained |
-| Linux x64 | `0.4.0-rc.9-linux.1` | glibc >=2.36 (e.g. Debian 12 / Ubuntu 24.04); no Alpine/musl or ARM64 |
+| Windows x64 | `0.4.0-rc.10` | Inactive plugin rc.9 data is copied; original records retained |
+| Linux x64 | `0.4.0-rc.10-linux.1` | glibc >=2.36 (e.g. Debian 12 / Ubuntu 24.04); no Alpine/musl or ARM64 |
 
 The launcher selects a separate, exact lockfile for each platform. No macOS support is claimed.
 
@@ -31,8 +31,9 @@ Grafana test results are separate from this plugin's native MCP acceptance.
 
 ### Linux MCP and Glama verification
 
-The standalone MCP now also has a compiled **Linux x64** release,
-`0.4.0-rc.9-linux.1` (Node >=22.18, glibc >=2.36), with 21 tools and 17 resources.
+The current standalone **Linux x64** release is rc.10-linux.1 (Node >=22.19,
+glibc >=2.36), with 21 tools and 17 resources. The earlier
+`0.4.0-rc.9-linux.1` has separate historical Glama evidence:
 [Glama](https://glama.ai/mcp/servers/joinwell52-AI/BoundaryXP) successfully built
 and started that package, discovered its tools/resources and published the Linux
 release on November 16, 2026. [Release and checksums](https://github.com/joinwell52-AI/BoundaryXP/releases/tag/mcp-v0.4.0-rc.9-linux.1)
@@ -41,10 +42,11 @@ are public. Original Core source remains private.
 
 **The plugin wrapper now supports both Windows and Linux x64.** It checks Node,
 CPU and Linux glibc before creating storage or installing anything. The Windows
-lockfile remains byte-identical; Linux uses `runtime/linux/package-lock.json`.
+lockfile is in `runtime/package-lock.json`; Linux uses `runtime/linux/package-lock.json`.
 Glama verification concerns the standalone package; this wrapper's separate
 installation and case evidence is documented in the [test guide](../../tests/boundaryxp/README.md).
-Neither verifies semantic accuracy for arbitrary inputs.
+Neither verifies semantic accuracy for arbitrary inputs. The earlier Glama build
+is not rc.10 platform validation. [Current rc.10 release acceptance](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/RC10.md).
 
 ### Install on Windows or Linux
 
@@ -94,14 +96,19 @@ digest and job ID. Poll `bx_job_get` and read the returned `result_revision` wit
 the old result. Do not silently retry failed analyses.
 
 For custom dictionaries, call `bx_dictionary_format` for L2 or L3 in `en` or
-`zh-CN`, validate the whole JSON using `bx_dictionary_validate`, then import the
-same document with its returned sha256 using `bx_dictionary_import`. Versions
-cannot be silently overwritten. Binding a dictionary grants no authority.
+`zh-CN`. B345 returns a complete directory document (`files` with paths and text):
+L2 has 8 JSON files plus README; L3 has 3 JSON files plus README. Validate the
+whole serialized document using `bx_dictionary_validate`, then import exactly
+that document with its returned sha256 using `bx_dictionary_import`. In the UI,
+select the layer, select the complete folder, validate, enter a name and save.
+Model settings save separately. Earlier single-document dictionaries remain
+readable; versions cannot be overwritten. Binding grants no authority.
 
 For a calculation case, use [limits-and-budget.md](examples/limits-and-budget.md)
-with the English L2/L3 examples returned by `bx_dictionary_format`, validated,
-imported and explicitly bound. The L3 example defines “customer canary”; retain
-that dictionary evidence rather than inferring an environment from the name.
+with explicitly selected L2/L3 dictionaries. The historical rc.9 acceptance used
+the legacy English examples and their “customer canary” definition; keep that
+binding when replaying the old case. Current directory examples are different
+resources, so inspect their content rather than assuming the same definitions.
 Ask the host to judge each child and the combined budget, submit supported
 finite queries, read both reports and recheck the saved result. The task text is
 test data, not permission to build, deploy or execute anything.
@@ -112,7 +119,8 @@ test data, not permission to build, deploy or execute anything.
   Linux: `$XDG_DATA_HOME/BoundaryXP/CommunityPlugin`, or
   `$HOME/.local/share/BoundaryXP/CommunityPlugin` when XDG_DATA_HOME is unset.
   The selected home contains the npm
-  cache, pinned runtime, empty host profiles and `data-rc9` task/dictionary store.
+  cache, pinned runtime, empty host profiles and `data-rc10` task/dictionary store.
+  An older plugin's `data-rc9` is retained after copy migration.
   This is separate from existing standalone installations. No existing tasks,
   dictionary directories, host settings or ports are discovered or changed.
 - `BXP_PLUGIN_HOME` may specify a dedicated absolute directory. An unrelated
@@ -135,9 +143,15 @@ test data, not permission to build, deploy or execute anything.
 
 ## Updates, removal and safe failures
 
-This plugin pins Windows rc.9 and Linux rc.9-linux.1, not a moving npm tag. It does not automatically upgrade the Core,
-migrate existing data or restart other clients. Future runtime changes need an
-explicit migration plan preserving original records. Keep the plugin home when
+This plugin pins Windows rc.10 and Linux rc.10-linux.1, not a moving npm tag.
+Close older plugin connections before upgrading. On the first connection, the
+shipped migration helper copies this plugin's inactive `data-rc9` to `data-rc10`,
+verifies file hashes and retains the original directory, profiles and migration
+receipt. Active old processes, inconsistent identities and incomplete target
+directories are refused without killing processes or deleting data. New work
+uses `data-rc10`; reverting to the older plugin reads the old snapshot and does
+not include work created afterward. `--install-only` downloads the runtime but
+does not migrate data. No standalone installation is scanned. Keep the plugin home when
 updating/removing the plugin; plugin cache deletion does not delete this home.
 Do not run duplicate connections against one task store. Cross-OS copying of an
 existing store has not been qualified; use each platform's dedicated home.
@@ -151,6 +165,7 @@ existing store has not been qualified; use each platform's dedicated home.
 | BXP_BUSY | Wait for the other install and reconnect; inspect a stale install.lock only after confirming no installation is running. |
 | BXP_INSTALL / incomplete runtime | Check stderr/network. Failed staging files are retained for inspection; no silent reinstall or analysis retry. |
 | BXP_PROFILE | Keep the plugin's profiles list empty; standalone API setup is separate. |
+| MIGRATION_SOURCE_BUSY_CLOSE_CLIENTS / BXP_DATA | Close the old plugin connection; inspect retained records or incomplete target before retrying. Never delete the old store to bypass a failure. |
 | Model output rejected | Preserve failed job/raw response; inspect built-in troubleshooting before an explicitly requested new analysis. |
 
 ## Verification and distribution

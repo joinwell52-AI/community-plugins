@@ -1,5 +1,33 @@
 # BoundaryXP plugin checks
 
+## rc.10 / B345 synchronization — November 17, 2026
+
+Plugin **0.3.0** pins Windows **0.4.0-rc.10** and Linux
+**0.4.0-rc.10-linux.1**. `npm run test:boundaryxp` passed **9/9, zero skips**
+on Windows and Debian 12 Linux x64, each with Node **22.19.0 / 24.19.0**.
+Cold npm installs exercised real native MCP discovery (21 tools / 17 resources),
+four complete bilingual L2/L3 directory examples (9/4 files), validation/import,
+multiple DEV persistence, workbench HTTP and reconnect preservation.
+Both production locks audited with zero vulnerabilities. Marketplace validation
+and the canonical npm dispatcher tests passed (11/11, zero skips). No GitHub
+workflow was dispatched and the unrelated full marketplace suite was not rerun.
+
+Separate real rc.9 fixture-copy upgrade checks passed on Windows and Linux:
+15 / 62 persistent files retained, respectively, with 2 / 5 custom dictionaries,
+original source-store bytes and profiles unchanged. New protocol-audit events
+append to the copied log; its original prefix remains intact. Active old source
+processes are refused without termination. New work uses data-rc10; old data-rc9
+is retained. The helper is imported from the locked compiled package, not a
+second implementation of migration or Core.
+
+The migrated Linux case retained both old reports. An attempted recheck of the
+deliberately superseded revision correctly returned PROJECT_REVISION_CONFLICT.
+In a new isolated project, the original input and saved host analysis were
+replayed: 3/3 native calculations valid, no incomplete/invalid calculations,
+and zero-model recheck produced the same report. This is regression replay,
+**not a fresh LLM semantic analysis**. Original failed/cancelled records remain.
+Historical 0.2.0 acceptance below is not relabeled as 0.3.0 evidence.
+
 ## Linux and Windows acceptance — November 17, 2026
 
 Plugin **0.2.0** has real local acceptance on Windows x64 and Debian 12 Linux

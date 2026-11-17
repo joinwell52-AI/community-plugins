@@ -3,10 +3,10 @@ import path from 'node:path';
 import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-export const VERSION = '0.4.0-rc.9';
-export const LINUX_VERSION = '0.4.0-rc.9-linux.1';
+export const VERSION = '0.4.0-rc.10';
+export const LINUX_VERSION = '0.4.0-rc.10-linux.1';
 const pluginRoot = fileURLToPath(new URL('../', import.meta.url));
 const owner = { kind: 'BOUNDARYXP_COMMUNITY_PLUGIN', schema: 1 };
 
@@ -123,6 +123,35 @@ export async function ensureRuntime(home) {
   } finally { await fs.rmdir(lockDir); }
 }
 
+export async function prepareData(home, server) {
+  // Reuse the shipped migration contract; never rewrite old task/result bytes.
+  const packageRoot = path.dirname(server);
+  const pin = JSON.parse(await fs.readFile(path.join(packageRoot, 'runtime/MCP-RUNTIME-LOCK.json'), 'utf8'));
+  const target = path.join(home, 'data-rc10');
+  const source = path.join(home, 'data-rc9');
+  const lock = path.join(home, 'data-upgrade.lock');
+  try { await fs.mkdir(lock); }
+  catch (error) { if (error.code === 'EEXIST') throw new Error('BXP_BUSY: data preparation is running; reconnect after it completes.'); throw error; }
+  try {
+    try {
+      const marker = JSON.parse(await fs.readFile(path.join(target, 'MCP-B332-OWNED.json'), 'utf8'));
+      if ((await fs.lstat(target)).isSymbolicLink() || marker.kind !== 'MCP_B332_DATA' || marker.runtime_sha256 !== pin.manifest_sha256) throw new Error('BXP_DATA: rc.10 data identity differs; all records retained.');
+      return target;
+    } catch (error) { if (error.code !== 'ENOENT') throw error; }
+    try {
+      await fs.access(target);
+      throw new Error('BXP_DATA: incomplete rc.10 directory retained for inspection.');
+    } catch (error) { if (error.code !== 'ENOENT') throw error; }
+    try { await fs.access(source); }
+    catch (error) { if (error.code === 'ENOENT') return target; throw error; }
+    const marker = JSON.parse(await fs.readFile(path.join(source, 'MCP-B332-OWNED.json'), 'utf8'));
+    const { copyRuntimeData } = await import(pathToFileURL(path.join(packageRoot, 'data-migration.mjs')).href);
+    copyRuntimeData({ source, destination: target, fromRuntime: marker.runtime_sha256, toRuntime: pin.manifest_sha256 });
+    console.error('BoundaryXP: copied inactive plugin rc.9 data to rc.10; original tasks, dictionaries and records retained.');
+    return target;
+  } finally { await fs.rmdir(lock); }
+}
+
 export async function main(args = process.argv.slice(2)) {
   if (args.some(arg => arg !== '--install-only') || args.length > 1) throw new Error('BXP_ARGS: only --install-only is supported. Configure BXP_PLUGIN_HOME for an isolated home.');
   assertSupported();
@@ -137,7 +166,8 @@ export async function main(args = process.argv.slice(2)) {
   const profileConfig = JSON.parse(await fs.readFile(profiles, 'utf8'));
   if (!Array.isArray(profileConfig.profiles) || profileConfig.profiles.length) throw new Error('BXP_PROFILE: plugin requires an empty profiles list for host mode. Existing file was retained.');
   if (args.includes('--install-only')) { console.log(JSON.stringify({ version: runtimeSpec().version, ready: true })); return; }
-  const child = spawn(process.execPath, [server, '--data-root', path.join(home, 'data-rc9'), '--profiles', profiles], {
+  const data = await prepareData(home, server);
+  const child = spawn(process.execPath, [server, '--data-root', data, '--profiles', profiles], {
     cwd: home, env: safeEnvironment(), windowsHide: true, shell: false, stdio: 'inherit'
   });
   const stop = () => child.kill();

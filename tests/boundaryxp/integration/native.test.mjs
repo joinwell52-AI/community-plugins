@@ -34,6 +34,8 @@ test('cold packaged install, actual native tools, multiple DEV tasks and persist
     for (const layer of ['L2','L3']) {
       for (const language of ['en','zh-CN']) {
         const example = (await client.call('bx_dictionary_format',{layer,language})).data.example;
+        assert.equal(example.schema,'boundaryxp-dictionary-directory/1');
+        assert.equal(example.files.length,layer === 'L2' ? 9 : 4);
         const document = JSON.stringify(example);
         const validation = (await client.call('bx_dictionary_validate',{document})).data;
         assert.equal(validation.valid,true);

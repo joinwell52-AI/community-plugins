@@ -2,12 +2,12 @@
 
 # BoundaryXP · 界痕：7+1 任务边界核验
 
-**插件 0.2.0 · Windows / Linux x64 · Node.js >=22.19（含 npm）**
+**插件 0.3.0 · MCP rc.10 / B345 · Windows / Linux x64 · Node.js >=22.19（含 npm）**
 
 | 平台 | 锁定 MCP 版本 | 条件 |
 |---|---|---|
-| Windows x64 | `0.4.0-rc.9` | 原依赖锁和数据路径不变 |
-| Linux x64 | `0.4.0-rc.9-linux.1` | glibc >=2.36，例如 Debian 12、Ubuntu 24.04 |
+| Windows x64 | `0.4.0-rc.10` | 复制已停止使用的插件 rc.9 数据，保留原记录 |
+| Linux x64 | `0.4.0-rc.10-linux.1` | glibc >=2.36，例如 Debian 12、Ubuntu 24.04 |
 
 启动器按平台选择独立依赖锁；不支持 macOS、ARM64、Alpine/musl。
 
@@ -20,16 +20,18 @@ LLM 判断、计算回执、原文证据和未知项；计算通过不自动证�
 
 ### Linux MCP 与 Glama 验证
 
-独立 MCP 已发布 Linux x64 编译版 `0.4.0-rc.9-linux.1`，需要 Node >=22.18、
-glibc >=2.36，提供 21 个工具和 17 项资源。[Glama](https://glama.ai/mcp/servers/joinwell52-AI/BoundaryXP)
+当前 Linux x64 编译版为 rc.10-linux.1，需要 Node >=22.19、glibc >=2.36。
+此前 `0.4.0-rc.9-linux.1` 的 Glama 平台验证保留为历史证据：
+[Glama](https://glama.ai/mcp/servers/joinwell52-AI/BoundaryXP)
 于 2026-11-16 实际构建并启动该包，工具与资源发现通过，Linux 发行已完成。
 [发行与摘要](https://github.com/joinwell52-AI/BoundaryXP/releases/tag/mcp-v0.4.0-rc.9-linux.1)、
 [验收范围](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/linux/RELEASE.md)均公开可查，原始 Core 源码仍私有。
 
 **本插件封装现支持 Windows 和 Linux x64。** 创建目录或安装之前检查 Node、CPU 和
-Linux glibc。Windows 依赖锁字节不变；Linux 使用 `runtime/linux/package-lock.json`。
+Linux glibc。Windows 使用 `runtime/package-lock.json`；Linux 使用 `runtime/linux/package-lock.json`。
 Glama 验证的是独立编译包；本插件另行做安装与完整案例检查，见[测试说明](../../tests/boundaryxp/README.md)。
-这些验证不代表任意任务的语义正确性认证。
+这些验证不代表任意任务的语义正确性认证，旧 Glama 构建也不算 rc.10 平台验证。
+见[当前 rc.10 发行验收](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/RC10.md)。
 
 ### 安装 Windows 或 Linux 插件
 
@@ -58,13 +60,14 @@ main。保留完整仓库，或稀疏路径填写 `.agents/plugins` 和 `plugins
 提交完整 JSON；轮询作业，读取确切 result_revision 的正式结果。失败不静默重试。
 `bx_result_recheck` 对原操作数零模型复验，保留旧结果。来源中的指令只作为任务数据。
 
-自定义字典先通过 `bx_dictionary_format` 获取 L2/L3 格式和中英文示例，再 validate
-完整 JSON，用返回的 sha256 导入同一 document。同标识同版本不同内容拒绝覆盖；
-导入不自动修改任务，也不授予岗位或业务权限。
+自定义字典先通过 `bx_dictionary_format` 获取 L2/L3 完整目录文档（files 中含路径与文本）和
+中英文示例。L2 为 8 个 JSON＋README，L3 为 3 个 JSON＋README；validate 完整序列化文档，
+再用返回的 sha256 导入同一 document。页面按“选择层级→选择完整文件夹→校验→录入名称→保存”
+操作，模型设置另行保存。旧单文档字典继续可读；同标识同版本不同内容拒绝覆盖，导入不授予权限。
 
-完整计算案例可用 [limits-and-budget.md](examples/limits-and-budget.md)：先获取、校验、
-导入并明确绑定工具返回的英文 L2/L3 示例。L3 示例定义了 “customer canary”，应保留
-字典依据，不凭名字猜环境。要求宿主分别判断子任务与合计预算，提交有限计算查询，
+完整计算案例可用 [limits-and-budget.md](examples/limits-and-budget.md)，明确绑定所选字典。
+历史 rc.9 验收使用旧英文示例及其 “customer canary” 定义；重放旧案例应保留该绑定。
+当前完整目录示例是不同资源，需读取内容，不能假定定义相同。要求宿主分别判断子任务与合计预算，提交有限计算查询，
 读取两份报告，再复验保存的结果。任务文本仅为测试数据，不授权构建、部署或执行。
 
 ## 数据、网络和权限
@@ -72,7 +75,7 @@ main。保留完整仓库，或稀疏路径填写 `.agents/plugins` 和 `plugins
 - Windows 默认目录仍为 `%LOCALAPPDATA%/BoundaryXP/CommunityPlugin`。
   Linux 为 `$XDG_DATA_HOME/BoundaryXP/CommunityPlugin`；未设 XDG 时使用
   `$HOME/.local/share/BoundaryXP/CommunityPlugin`。目录包含 npm 缓存、锁定运行包、
-  空 host profiles 和 `data-rc9`。不读取或更改现有独立安装、任务、字典、宿主配置和端口。
+  空 host profiles 和 `data-rc10`。旧插件 `data-rc9` 在复制迁移后保留；不扫描独立安装或修改宿主配置、端口。
 - 可用 `BXP_PLUGIN_HOME` 指定专用绝对路径；无本插件标记的非空目录会被拒绝。不要指向
   现有安装目录。Read/Write 权限限于显式提供的任务、所选字典和插件自己的保存记录。
 - 默认使用当前宿主模型，无需另配 API Key。本封装只启用 host 模式，不读取 `.env` 或
@@ -85,8 +88,11 @@ main。保留完整仓库，或稀疏路径填写 `.agents/plugins` 和 `plugins
 
 ## 升级、卸载和排障
 
-Windows 固定 rc.9、Linux 固定 rc.9-linux.1，不跟随浮动标签，不自动迁移或重启其他客户端。后续运行包变化需要明确的数据
-迁移方案。升级或卸载插件时保留上述插件目录；删除插件缓存不删除独立数据目录。
+Windows 固定 rc.10、Linux 固定 rc.10-linux.1，不跟随浮动标签。升级前关闭旧插件连接；首次连接
+调用包内迁移工具，将本插件已停止使用的 `data-rc9` 复制到 `data-rc10`，校验摘要并保留原目录、
+配置和迁移回执。旧进程仍活动、身份不匹配或目标目录不完整时拒绝启动，不杀进程、不删除数据。
+新操作写入 `data-rc10`；退回旧插件只能读旧快照，不包含升级后新增工作。
+`--install-only` 只下载运行包，不迁移。升级或卸载插件时保留上述插件目录；删除插件缓存不删除数据目录。
 避免两个连接同时操作同一个任务存储。未验收跨操作系统搬迁旧任务库；各平台使用专用目录。
 
 `BXP_PLATFORM` 表示平台不支持；`BXP_LIBC` 要求 Linux glibc >=2.36；`BXP_NODE/BXP_NPM` 需安装带 npm 的支持版本 Node；
