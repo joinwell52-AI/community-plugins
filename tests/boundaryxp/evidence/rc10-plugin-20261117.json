@@ -12,6 +12,15 @@
     {"platform":"linux-x64-glibc2.36","node":"24.19.0","pass":9,"fail":0,"skip":0}
   ],
   "tools":21,
+  "codex_git_install":{
+    "source":"joinwell52-AI/community-plugins#codex/boundaryxp-plugin-20261116",
+    "plugin_version":"0.3.0",
+    "installed_copy_called":true,
+    "launcher_sha256":"71f677693d51afc7e2e51ae4df0bae3d51b823148acfbb31d6080d68b50647ff",
+    "runtime_version":"0.4.0-rc.10-linux.1",
+    "custom_dictionaries_retained":5,
+    "model_requests":0
+  },
   "resources":17,
   "complete_directory_examples":4,
   "L2_file_count":9,

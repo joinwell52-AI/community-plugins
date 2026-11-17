@@ -28,6 +28,13 @@ and zero-model recheck produced the same report. This is regression replay,
 **not a fresh LLM semantic analysis**. Original failed/cancelled records remain.
 Historical 0.2.0 acceptance below is not relabeled as 0.3.0 evidence.
 
+After publishing implementation `d3a372d`, a separate Linux CODEX_HOME installed
+0.3.0 directly from the GitHub contributor branch with sparse `.agents/plugins`
+and `plugins` paths. Its actual installed MCP copy returned rc.10-linux.1,
+21 tools / 17 resources and all five migrated custom dictionaries. The launcher
+SHA-256 matched the tested copy. No analysis was resubmitted by this read-only
+installation check. [Sanitized rc.10 evidence](evidence/rc10-plugin-20261117.json).
+
 ## Linux and Windows acceptance — November 17, 2026
 
 Plugin **0.2.0** has real local acceptance on Windows x64 and Debian 12 Linux
