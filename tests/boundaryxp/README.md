@@ -39,6 +39,15 @@ local caches and Core implementation are excluded. These checks qualify this
 wrapper's Linux installation and case flow, not Linux desktop GUI behavior,
 arbitrary-input semantic accuracy, macOS/ARM64/musl or cross-OS data migration.
 
+After pushing implementation `02e940c`, a **second fresh Linux CODEX_HOME** added
+the GitHub contributor branch with sparse `.agents/plugins` and `plugins` paths,
+then installed/enabled 0.2.0. Its launcher hash matched the locally tested copy.
+Actual MCP calls through that Git-installed copy returned Linux rc.9-linux.1,
+21 tools / 17 resources, both earlier result revisions and all five dictionaries.
+Profiles, ownership marker and runtime receipt remained byte-identical; no
+analysis was resubmitted. This separately verifies the published candidate
+installation route, without claiming upstream marketplace approval.
+
 The November 17 implementation adds Linux x64/glibc >=2.36 to plugin 0.2.0.
 Windows retains its exact rc.9 runtime lock and default data path. Linux selects
 the independent rc.9-linux.1 lock and an XDG data directory. Platform/Node/libc

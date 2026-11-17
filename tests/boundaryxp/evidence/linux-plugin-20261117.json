@@ -43,7 +43,14 @@
     "isolated_home": true,
     "local_marketplace_install": true,
     "plugin_enabled": true,
-    "case_used_installed_copy": true
+    "case_used_installed_copy": true,
+    "github_marketplace_install": true,
+    "tested_github_head": "02e940ceb05e092f77e0b86551da038f24f66e47",
+    "git_installed_launcher_matches": true,
+    "git_reconnect_preserved_old_result_and_recheck": true,
+    "git_reconnect_preserved_custom_dictionaries": 5,
+    "git_reconnect_profiles_owner_runtime_receipt_unchanged": true,
+    "git_reconnect_model_requests": 0
   },
   "full_case": {
     "status": "PASS",
