@@ -1,5 +1,44 @@
 # BoundaryXP plugin checks
 
+## rc.11 / B348 synchronization — November 18, 2026
+
+Plugin **0.4.0** pins public Windows **0.4.0-rc.11** and Linux
+**0.4.0-rc.11-linux.1** archives. The canonical `npm run test:boundaryxp`
+suite passed **9/9, zero skips** on Windows x64 and Debian 12 Linux x64,
+each with Node **22.19.0 and 24.19.0**. Marketplace validation and the npm
+dispatcher suite passed (11/11, zero skips); both runtime locks audited with
+zero vulnerabilities. No GitHub workflow was dispatched. The full unrelated
+marketplace/provider suite is not claimed green.
+
+Cold plugin installs exercised actual native tools, four complete bilingual
+L2/L3 directory examples, two custom imports, distinct DEV task IDs, HTTP
+workbench and reconnect persistence. Separate complete Windows/Linux plugin
+case replays used the same saved current-Codex response: 2 valid PROGRAM
+calculations (DEV-01 VERIFIED, DEV-02 VIOLATED), complete Chinese/English
+reports, zero-server-model recheck from revision 7 to 8, and the original
+revision retained. Report SHA-256 on both platforms:
+`26e8a827431f6727319417662f7c9230c511d9f0b7a50b60b79a25272e3dbb00`.
+This is delivery regression replay, not additional independent model analysis.
+
+The launcher copies inactive `data-rc10` to `data-rc11`; only when rc.10 is
+absent does it select `data-rc9`. Isolated tests on both platforms preserved
+all 61 source files and verified reconnect. Both path-selection branches were
+tested with a saved rc.10 fixture; this does not relabel it as an actual rc.9
+runtime migration. Original directories are retained; package migration logic
+remains the only migration implementation.
+
+Initial test setup failures are retained: the first Linux test archive omitted
+the marketplace manifest; a separate attempt used Node 22.18 and correctly
+failed the >=22.19 guard. Restoring the manifest and using the official
+checksum-verified Node 22.19.0 distribution resolved those setup issues without
+weakening tests or platform requirements. The direct dispatcher run skipped
+its npm-lifecycle check; the canonical npm run then passed all 11.
+
+[Sanitized rc.11 evidence](evidence/rc11-20261118.json) ·
+[Product acceptance](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/RC11.md) ·
+[Glama rc.11 build/discovery](https://github.com/joinwell52-AI/BoundaryXP/blob/main/docs/mcp/GLAMA-RC11.md).
+Original Core source remains private. Prior records below retain their dates.
+
 ## rc.10 / B345 synchronization — November 17, 2026
 
 Plugin **0.3.0** pins Windows **0.4.0-rc.10** and Linux
